@@ -1,7 +1,7 @@
 'use client'
 import {useEffect,useState} from 'react'
 import StudioOS from '../components/StudioOS'
-import {supabase} from '../lib/supabase'
+import {supabase,warmSchemaGuard} from '../lib/supabase'
 
 export default function Page(){
   const [boot,setBoot]=useState(true)
@@ -13,9 +13,9 @@ export default function Page(){
 
   useEffect(()=>{
     let alive=true
-    supabase.auth.getSession()
-      .then(({data})=>{if(alive)setSession(data.session||null)})
-      .catch(e=>{if(alive)setMsg(e?.message||'Could not read session')})
+    Promise.all([supabase.auth.getSession(),warmSchemaGuard()])
+      .then(([{data}])=>{if(alive)setSession(data.session||null)})
+      .catch(e=>{if(alive)setMsg(e?.message||'Could not initialize app')})
       .finally(()=>{if(alive)setBoot(false)})
     const {data:sub}=supabase.auth.onAuthStateChange((_event,next)=>setSession(next))
     return()=>{alive=false;sub?.subscription?.unsubscribe?.()}
@@ -26,6 +26,7 @@ export default function Page(){
     setBusy(true)
     setMsg('')
     try{
+      await warmSchemaGuard()
       const {data,error}=await supabase.auth.signInWithPassword({email,password})
       if(error)throw error
       setSession(data.session||null)
