@@ -1,0 +1,40 @@
+name: Fix subscription favicon
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-subscription-favicon.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch favicon rendering
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('components/StudioOS.jsx')
+          s=p.read_text()
+          old="""function Avatar({member,size=31}){\n  return <div className=\"avatar\" style={{width:size,height:size}}>{member?.avatar_url?<img src={member.avatar_url} alt=\"\"/>:initials(member?.full_name||member?.name||member?.email)}</div>\n}\n"""
+          new="""function Avatar({member,size=31}){\n  return <div className=\"avatar\" style={{width:size,height:size}}>{member?.avatar_url?<img src={member.avatar_url} alt=\"\"/>:initials(member?.full_name||member?.name||member?.email)}</div>\n}\nfunction SubscriptionFavicon({website,name,size=34}){\n  const [failed,setFailed]=useState(false)\n  let domain=''\n  try{const raw=(website||'').trim();if(raw)domain=new URL(/^https?:\\/\\//i.test(raw)?raw:`https://${raw}`).hostname.replace(/^www\\./,'')}catch{}\n  const src=domain?`https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`:''\n  if(!src||failed)return <div className=\"avatar\" style={{width:size,height:size}}>{(name||'?')[0]?.toUpperCase()}</div>\n  return <div className=\"avatar\" style={{width:size,height:size,overflow:'hidden'}}><img src={src} alt=\"\" referrerPolicy=\"no-referrer\" onError={()=>setFailed(true)} style={{width:'72%',height:'72%',objectFit:'contain'}}/></div>\n}\n"""
+          if old not in s:
+              raise SystemExit('Avatar anchor not found')
+          s=s.replace(old,new,1)
+          old2='<div className="avatar">{(s.name||\'?\')[0]}</div><div className="listMain"><b>{s.name}</b>'
+          new2='<SubscriptionFavicon website={s.website||s.website_url||s.url||s.site_url} name={s.name}/><div className="listMain"><b>{s.name}</b>'
+          if old2 not in s:
+              raise SystemExit('Subscription avatar anchor not found')
+          s=s.replace(old2,new2,1)
+          p.write_text(s)
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name "chakra-v13-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add components/StudioOS.jsx
+          git commit -m "Fix subscription favicon rendering"
+          git push
