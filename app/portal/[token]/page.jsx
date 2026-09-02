@@ -1,0 +1,16 @@
+'use client'
+import {useEffect,useState} from 'react'
+import {supabase} from '../../../lib/supabase'
+import {ExternalLink,FolderOpen} from 'lucide-react'
+
+export default function PortalPage({params}){
+  const [state,setState]=useState({loading:true,data:null,error:''})
+  useEffect(()=>{(async()=>{try{const token=await Promise.resolve(params).then(x=>x.token);const {data,error}=await supabase.rpc('chakra_portal_view',{p_token:token});if(error)throw error;setState({loading:false,data:Array.isArray(data)?data[0]||null:data,error:''})}catch(e){setState({loading:false,data:null,error:e.message})}})()},[params])
+  if(state.loading)return <div className="preloader"><div className="pulse">C</div></div>
+  if(!state.data)return <div className="portal"><div className="portalShell"><div className="portalHero"><div className="eyebrow">Chakra Studio</div><h1>Project portal unavailable</h1><p className="muted">This portal link is invalid, disabled or no longer active.</p></div></div></div>
+  const d=state.data,p=d.project||{},c=d.company||{},milestones=d.milestones||[],tasks=d.tasks||[],meetings=d.meetings||[]
+  return <div className="portal"><div className="portalShell"><div className="portalHero"><div style={{display:'flex',justifyContent:'space-between',gap:20,alignItems:'flex-start'}}><div>{c.logo_url?<img src={c.logo_url} alt="" style={{height:32,maxWidth:120,objectFit:'contain'}}/>:<div className="brandName">CHAKRA</div>}<div className="eyebrow" style={{marginTop:25}}>Client project portal</div><h1 style={{fontSize:40,margin:'8px 0'}}>{p.name}</h1><div className="muted">{p.client||''}</div></div><div className="right"><div className="metricLabel">Progress</div><div className="metricValue">{p.portal_progress??p.progress??0}%</div></div></div><div className="progress" style={{marginTop:22}}><span style={{width:`${p.portal_progress??p.progress??0}%`}}/></div>{p.portal_summary&&<p style={{fontSize:18,lineHeight:1.6,maxWidth:720}}>{p.portal_summary}</p>}{p.drive_url&&<a className="btn primary" href={p.drive_url} target="_blank"><FolderOpen size={16}/>Open project files</a>}</div>
+  <div className="grid two" style={{marginTop:18}}><div className="card"><h3>Milestones</h3><div className="timeline">{milestones.map((m,i)=><div className="timelineItem" key={m.id||i}><b>{m.title||m.name}</b><div className="muted small">{m.completed_at||m.completed?'Completed':m.is_current?'Current':'Upcoming'}</div></div>)}</div></div><div className="card"><h3>Upcoming meetings</h3><div className="list">{meetings.map((m,i)=><div className="listRow" key={m.id||i}><div className="listMain"><b>{m.title||'Meeting'}</b><div className="muted small">{m.start_at?new Date(m.start_at).toLocaleString():'—'}</div><div className="muted small">{Array.isArray(m.attendee_names)?m.attendee_names.join(', '):m.attendee_names||''}</div></div>{m.meeting_url&&<a className="btn" href={m.meeting_url} target="_blank">Join <ExternalLink size={14}/></a>}</div>)}</div></div></div>
+  {tasks.length>0&&<div className="card" style={{marginTop:18}}><h3>Visible tasks</h3><div className="list">{tasks.map((t,i)=><div className="listRow" key={t.id||i}><div className="listMain"><b>{t.title}</b><div className="muted small">{t.status||'open'}</div></div></div>)}</div></div>}
+  </div></div>
+}
