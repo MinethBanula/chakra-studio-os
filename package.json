@@ -1,0 +1,18 @@
+{
+  "name":"chakra-studio-os-v13",
+  "version":"13.3.0",
+  "private":true,
+  "scripts":{"dev":"next dev","build":"next build","start":"next start"},
+  "dependencies":{
+    "@supabase/supabase-js":"2.56.1",
+    "framer-motion":"12.23.12",
+    "lucide-react":"0.468.0",
+    "motion-dom":"12.23.12",
+    "motion-utils":"12.23.6",
+    "next":"15.5.24",
+    "react":"19.1.1",
+    "react-dom":"19.1.1",
+    "recharts":"2.15.4"
+  },
+  "overrides":{"motion-dom":"12.23.12","motion-utils":"12.23.6"}
+}
