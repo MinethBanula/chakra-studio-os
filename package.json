@@ -1,9 +1,10 @@
 {
   "name":"chakra-studio-os-v13",
-  "version":"13.3.0",
+  "version":"13.4.0",
   "private":true,
   "scripts":{"dev":"next dev","build":"next build","start":"next start","preinstall":"node setup.js"},
   "dependencies":{
+    "@react-pdf/renderer":"4.3.1",
     "@supabase/supabase-js":"2.56.1",
     "framer-motion":"12.23.12",
     "lucide-react":"0.468.0",
